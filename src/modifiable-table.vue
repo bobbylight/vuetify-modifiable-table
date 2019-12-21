@@ -1,5 +1,5 @@
 <template>
-    <div>
+    <div class="modifiable-table">
 
         <v-data-table
                 :dense="dense"
@@ -22,10 +22,10 @@
 
                     <v-spacer v-if="title || rightAlignButtons"/>
 
-                    <v-btn color="primary" text icon @click="selectedItems = []; dialog = true">
+                    <v-btn color="primary" text icon @click="showAddOrEditModal(true)">
                         <v-icon>mdi-plus</v-icon>
                     </v-btn>
-                    <v-btn color="primary" text icon @click="dialog = true" :disabled="selectedItems.length === 0">
+                    <v-btn color="primary" text icon @click="showAddOrEditModal(false)" :disabled="selectedItems.length === 0">
                         <v-icon>mdi-pencil</v-icon>
                     </v-btn>
                     <v-btn color="primary" text icon @click="deleteDialog = true" :disabled="selectedItems.length === 0">
@@ -36,8 +36,8 @@
 
         </v-data-table>
 
-        <v-dialog v-model="dialog" max-width="500px" @click:outside="refreshSelectedItemsCopy"
-                  @keydown.esc="refreshSelectedItemsCopy">
+        <v-dialog v-model="showModifyRowDialog" max-width="500px" @click:outside="onCancel"
+                  @keydown.esc="onCancel">
 
             <v-card>
                 <v-card-title>
@@ -46,15 +46,15 @@
 
                 <v-card-text>
                     <v-container>
-                        <slot name="dialogContent" :selected-items="selectedItemsCopy">
-                            Selected item: {{selectedItemsCopy}}
+                        <slot name="dialogContent" :selected-item="rowBeingModified">
+                            Selected item: {{rowBeingModified}}
                         </slot>
                     </v-container>
                 </v-card-text>
 
                 <v-card-actions>
-                    <v-spacer></v-spacer>
-                    <v-btn color="blue darken-1" text :disabled="isSaveButtonDisabled()" @click="onSave">Save</v-btn>
+                    <v-spacer/>
+                    <v-btn color="blue darken-1" text :disabled="saveDisabled" @click="onSave">Save</v-btn>
                     <v-btn color="blue darken-1" text @click="onCancel">Cancel</v-btn>
                 </v-card-actions>
             </v-card>
@@ -70,8 +70,8 @@
                 <v-card-text>
                     <v-container>
                         <v-row>
-                            <slot name="deleteDialogContent" :selected-items="selectedItemsCopy">
-                                <div v-if="selectedItemsCopy.length > 0">
+                            <slot name="deleteDialogContent" :selected-item="rowBeingModified">
+                                <div v-if="rowBeingModified != null">
                                     Are you sure you want to delete the selected {{itemName}}?
                                 </div>
                                 <div v-else>
@@ -83,7 +83,7 @@
                 </v-card-text>
 
                 <v-card-actions>
-                    <v-spacer></v-spacer>
+                    <v-spacer/>
                     <v-btn color="blue darken-1" text @click="onDeleteItem">Yes</v-btn>
                     <v-btn color="blue darken-1" text @click="onCancelDelete">No</v-btn>
                 </v-card-actions>
@@ -97,6 +97,23 @@ import Component from 'vue-class-component';
 import Vue from 'vue';
 import { Prop, Watch } from 'vue-property-decorator';
 
+export interface ModifiableTableHeader {
+    text: string;
+    value: string;
+    align?: 'start' | 'center' | 'end';
+    sortable?: boolean;
+    filterable?: boolean;
+    divider?: boolean;
+    class?: string | string[];
+    width?: string | number;
+    filter?: (value: any, search: string, item: any) => boolean;
+    sort?: (a: any, b: any) => number;
+}
+
+export interface ModifiableTableRowValidationFunction<T> {
+    (newRowData: T, origRowData: T | null, allRecords: T[]): boolean;
+}
+
 @Component
 export default class ModifiableTable<T> extends Vue {
 
@@ -104,13 +121,16 @@ export default class ModifiableTable<T> extends Vue {
     value!: T[]; // Named "value" for v-model support
 
     @Prop({ required: true })
-    headers!: any[];
+    headers!: ModifiableTableHeader[];
 
     @Prop({ default: 'id' })
     itemKey!: string;
 
     @Prop({ default: 'Item' })
     itemName!: string;
+
+    @Prop()
+    validationFunc!: ModifiableTableRowValidationFunction<T> | null;
 
     @Prop({ required: false })
     title!: string;
@@ -124,10 +144,14 @@ export default class ModifiableTable<T> extends Vue {
     allItems: T[] = [];
 
     selectedItems: T[] = [];
-    selectedItemsCopy: T[] = [];
 
     dialog: boolean = false;
     deleteDialog: boolean = false;
+
+    showModifyRowDialog: boolean = false;
+    rowBeingModified: T | null = null;
+    modifiedItemKey: string | null = null;
+    saveDisabled: boolean = true;
 
     get deleteDialogTitle(): string {
         return `Delete ${this.itemName}`;
@@ -139,39 +163,23 @@ export default class ModifiableTable<T> extends Vue {
 
     isSaveButtonDisabled(): boolean {
 
-        // Dialog isn't visible - be safe and we're disabled
-        if (this.selectedItemsCopy.length === 0) {
+        if (!this.rowBeingModified) {
             return true;
         }
 
-        // If they haven't populated the item key field yet, we're disabled
-        const editedItem: T = this.selectedItemsCopy[0];
-        const editedItemKey: any = (editedItem as any)[this.itemKey];
-        if (!editedItemKey) {
-            return true;
-        }
-
-        // If they're editing a value but haven't changed the key, we must be in a good state
-        const isEdit: boolean = this.selectedItems.length > 0;
-        if (isEdit && editedItemKey === (this.selectedItems[0] as any)[this.itemKey]) {
-            return false;
-        }
-
-        // Otherwise, this is a new record or they've changed the key.
-        // In this case, if it matches some other existing value, we're disabled.
-        return this.value.map((v: T) => (v as any)[this.itemKey])
-            .indexOf(editedItemKey) > -1;
+        const origRow: T | null = this.modifiedItemKey ? this.selectedItems[0] : null;
+        return !!this.validationFunc && !this.validationFunc(this.rowBeingModified as T, origRow, this.allItems);
     }
 
     mounted() {
         // Need a gentle nudge the first time through
         this.onValueChanged(this.value);
-        this.refreshSelectedItemsCopy();
+        this.refreshRowBeingModified();
     }
 
     onCancel() {
-        this.dialog = false;
-        this.refreshSelectedItemsCopy();
+        this.showModifyRowDialog = false;
+        this.refreshRowBeingModified();
     }
 
     onCancelDelete() {
@@ -180,7 +188,7 @@ export default class ModifiableTable<T> extends Vue {
 
     onDeleteItem() {
 
-        const selectedKey: any = (this.selectedItemsCopy[0] as any)[this.itemKey];
+        const selectedKey: any = (this.rowBeingModified as any)[this.itemKey];
 
         const newDataList: T[] = this.value.filter((v: T) => {
             return (v as any)[this.itemKey] !== selectedKey;
@@ -191,44 +199,64 @@ export default class ModifiableTable<T> extends Vue {
         this.deleteDialog = false;
     }
 
+    @Watch('rowBeingModified', { deep: true })
+    onRowBeingModifiedChanged() {
+        this.saveDisabled = this.isSaveButtonDisabled();
+    }
+
     onSave() {
 
-        const isEdit: boolean = this.selectedItems.length > 0;
-        const editedItem: T = this.selectedItemsCopy[0];
-        const origItem: T = isEdit ? this.selectedItems[0] : {} as T;
-
         const newDataList: T[] = this.value.slice();
-        if (isEdit) {
-            const index: number = newDataList.indexOf(origItem);
-            newDataList[index] = editedItem;
+        const index: number = newDataList.findIndex((item: T) => {
+            return (item as any)[this.itemKey] === this.modifiedItemKey;
+        });
+        if (index > -1) {
+            newDataList.splice(index, 1, this.rowBeingModified!);
         }
         else {
-            newDataList.push(this.selectedItemsCopy[0]);
+            // Generate a key if it isn't a natural key that the user had to enter
+            (this.rowBeingModified as any)[this.itemKey] = Date.now().toString(10);
+            newDataList.push(this.rowBeingModified!);
         }
 
         this.$emit('input', newDataList);
 
-        this.dialog = false;
+        this.showModifyRowDialog = false;
         this.selectedItems.length = 0;
-        this.refreshSelectedItemsCopy();
+        this.refreshRowBeingModified();
     }
 
     onSelectedItemsChanged() {
-        this.refreshSelectedItemsCopy();
+        this.refreshRowBeingModified();
     }
 
     @Watch('value')
     onValueChanged(newItems: T[]) {
         this.allItems = newItems.slice();
+        this.selectedItems = [];
+        this.rowBeingModified = null;
     }
 
-    private refreshSelectedItemsCopy() {
+    private refreshRowBeingModified() {
+
         if (this.selectedItems.length > 0) {
-            this.selectedItemsCopy = JSON.parse(JSON.stringify(this.selectedItems));
+            this.rowBeingModified = JSON.parse(JSON.stringify(this.selectedItems[0]));
         }
         else {
-            this.selectedItemsCopy = [ {} as T ];
+            this.rowBeingModified = {} as T;
         }
+
+        this.saveDisabled = this.isSaveButtonDisabled();
+    }
+
+    showAddOrEditModal(newRecord: boolean) {
+
+        // Remember the key of the item being edited, or null if this is for a new item
+        this.modifiedItemKey = newRecord ? null : (this.selectedItems[0] as any)[this.itemKey] as string;
+
+        // Clone the record to pass to the callback
+        this.rowBeingModified = newRecord ? {} : JSON.parse(JSON.stringify(this.selectedItems[0]));
+        this.showModifyRowDialog = true;
     }
 }
 </script>

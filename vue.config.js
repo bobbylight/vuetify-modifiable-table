@@ -6,6 +6,9 @@ module.exports = {
     // This is a big cluster of an attempt to limit the number of "foo.vue" copies show up
     // in the Chrome debugger.  https://github.com/vuejs/vue-cli/issues/2978
     configureWebpack: (config) => {
+
+        config.externals = [ 'vue', 'vuetify', 'node_modules' ];
+
         if (process.env.NODE_ENV === 'development') {
             config.devtool = 'eval-source-map';
             config.output.devtoolFallbackModuleFilenameTemplate = 'webpack:///[resource-path]?[hash]';

@@ -21,6 +21,12 @@ npm run test   # Runs unit tests
 ```
 
 ## Using in an application
-You should be able to add this library to your dependencies, then
-just
-`import ModifiableTable from 'vuetify-modifiable-table/modifiable-table.vue`.
+Not sure if it's kosher, but for TypeScript projects I just add this library
+to my dependencies, then just:
+
+```javascript
+import ModifiableTable from 'vuetify-modifiable-table/modifiable-table.vue'
+```
+
+This way you don't have to worry about minified builds, type definitions, etc.
+The component will just get minified in your consuming project.

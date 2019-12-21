@@ -1,6 +1,6 @@
 {
   "name": "vuetify-modifiable-table",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "scripts": {
     "serve": "vue-cli-service serve src/demo/main.ts",
     "build": "NODE_ENV=production vue-cli-service build --target lib --skip-plugins vuetify src/modifiable-table.vue",

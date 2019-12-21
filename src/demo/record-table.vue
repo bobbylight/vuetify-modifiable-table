@@ -26,8 +26,7 @@
 <script lang="ts">
 import Vue from 'vue';
 import Component from 'vue-class-component';
-import ModifiableTable from '../modifiable-table.vue';
-import { ModifiableTableHeader } from '../modifiable-table.vue';
+import ModifiableTable, { ModifiableTableHeader } from '@/modifiable-table.vue';
 import { Prop } from 'vue-property-decorator';
 import { Record } from './app.vue';
 
@@ -64,7 +63,7 @@ export default class RecordTable extends Vue {
         this.$emit('input', newValue);
     }
 
-    nameFieldRules(selectedItem: Record): any[] {
+    nameFieldRules(selectedItem: Record): Function[] {
         return [
             (newValue: string): string | boolean => {
                 return newValue && newValue.trim().length ? true : 'Name must be provided';
@@ -79,9 +78,9 @@ export default class RecordTable extends Vue {
                 return true;
             }
         ];
-    };
+    }
 
-    ageFieldRules: any[] = [
+    ageFieldRules: Function[] = [
         (newValue: string): string | boolean => {
             return newValue && newValue.toString().trim().length ? true : 'Age must be provided';
         }
@@ -90,13 +89,13 @@ export default class RecordTable extends Vue {
     isRowValid(newRowData: Record): boolean {
 
         const nameFieldRules: Function[] = this.nameFieldRules(newRowData);
-        for (let i : number = 0; i < nameFieldRules.length; i++) {
+        for (let i: number = 0; i < nameFieldRules.length; i++) {
             if (nameFieldRules[i](newRowData.name) !== true) {
                 return false;
             }
         }
 
-        for (let i : number = 0; i < this.ageFieldRules.length; i++) {
+        for (let i: number = 0; i < this.ageFieldRules.length; i++) {
             if (this.ageFieldRules[i](newRowData.age) !== true) {
                 return false;
             }

@@ -97,6 +97,9 @@ import Component from 'vue-class-component';
 import Vue from 'vue';
 import { Prop, Watch } from 'vue-property-decorator';
 
+/**
+ * Valid fields for a header in a modifiable table.
+ */
 export interface ModifiableTableHeader {
     text: string;
     value: string;
@@ -110,15 +113,23 @@ export interface ModifiableTableHeader {
     sort?: (a: any, b: any) => number;
 }
 
-export interface ModifiableTableRowValidationFunction {
-    (newRowData: any, origRowData: any | null, allRecords: any[]): boolean;
+/**
+ * A callback function to validate that a user's input for a row is complete
+ * and valid.
+ */
+export interface ModifiableTableRowValidationFunction<T> {
+    (newRowData: T, origRowData: T | null, allRecords: T[]): boolean;
 }
 
+/**
+ * A table that allows the user to create, edit, delete, and optionally sort
+ * records.
+ */
 @Component
-export default class ModifiableTable extends Vue {
+export default class ModifiableTable<T> extends Vue {
 
     @Prop({ required: true })
-    value!: any[]; // Named "value" for v-model support
+    value!: T[]; // Named "value" for v-model support
 
     @Prop({ required: true })
     headers!: ModifiableTableHeader[];
@@ -130,7 +141,7 @@ export default class ModifiableTable extends Vue {
     itemName!: string;
 
     @Prop()
-    validationFunc!: ModifiableTableRowValidationFunction | null;
+    validationFunc!: ModifiableTableRowValidationFunction<T> | null;
 
     @Prop({ required: false })
     title!: string;
@@ -141,15 +152,14 @@ export default class ModifiableTable extends Vue {
     @Prop({ default: false })
     dense!: boolean;
 
-    allItems: any[] = [];
+    allItems: T[] = [];
 
-    selectedItems: any[] = [];
+    selectedItems: T[] = [];
 
-    dialog: boolean = false;
     deleteDialog: boolean = false;
 
     showModifyRowDialog: boolean = false;
-    rowBeingModified: any | null = null;
+    rowBeingModified: T | null = null;
     modifiedItemKey: string | null = null;
     saveDisabled: boolean = true;
 
@@ -167,8 +177,8 @@ export default class ModifiableTable extends Vue {
             return true;
         }
 
-        const origRow: any | null = this.modifiedItemKey ? this.selectedItems[0] : null;
-        return !!this.validationFunc && !this.validationFunc(this.rowBeingModified as any, origRow, this.allItems);
+        const origRow: T | null = this.modifiedItemKey ? this.selectedItems[0] : null;
+        return !!this.validationFunc && !this.validationFunc(this.rowBeingModified, origRow, this.allItems);
     }
 
     mounted() {
@@ -190,7 +200,7 @@ export default class ModifiableTable extends Vue {
 
         const selectedKey: any = (this.rowBeingModified as any)[this.itemKey];
 
-        const newDataList: any[] = this.value.filter((v: any) => {
+        const newDataList: T[] = this.value.filter((v: T) => {
             return (v as any)[this.itemKey] !== selectedKey;
         });
 
@@ -206,8 +216,8 @@ export default class ModifiableTable extends Vue {
 
     onSave() {
 
-        const newDataList: any[] = this.value.slice();
-        const index: number = newDataList.findIndex((item: any) => {
+        const newDataList: T[] = this.value.slice();
+        const index: number = newDataList.findIndex((item: T) => {
             return (item as any)[this.itemKey] === this.modifiedItemKey;
         });
         if (index > -1) {
@@ -239,13 +249,8 @@ export default class ModifiableTable extends Vue {
 
     private refreshRowBeingModified() {
 
-        if (this.selectedItems.length > 0) {
-            this.rowBeingModified = JSON.parse(JSON.stringify(this.selectedItems[0]));
-        }
-        else {
-            this.rowBeingModified = {};
-        }
-
+        this.rowBeingModified = (this.selectedItems.length > 0 ?
+            JSON.parse(JSON.stringify(this.selectedItems[0])) : {}) as T;
         this.saveDisabled = this.isSaveButtonDisabled();
     }
 
@@ -255,7 +260,7 @@ export default class ModifiableTable extends Vue {
         this.modifiedItemKey = newRecord ? null : (this.selectedItems[0] as any)[this.itemKey] as string;
 
         // Clone the record to pass to the callback
-        this.rowBeingModified = newRecord ? {} : JSON.parse(JSON.stringify(this.selectedItems[0]));
+        this.rowBeingModified = (newRecord ? {} : JSON.parse(JSON.stringify(this.selectedItems[0]))) as T;
         this.showModifyRowDialog = true;
     }
 }

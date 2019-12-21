@@ -7,7 +7,9 @@ module.exports = {
     // in the Chrome debugger.  https://github.com/vuejs/vue-cli/issues/2978
     configureWebpack: (config) => {
 
-        config.externals = [ 'vue', 'vuetify', 'node_modules' ];
+        // Don't include dependencies in our production builds of the component, but preserve
+        // them for our demo and npm run serve
+        config.externals = process.env.NODE_ENV === 'production' ? [ 'vue', 'vuetify' ] : undefined;
 
         if (process.env.NODE_ENV === 'development') {
             config.devtool = 'eval-source-map';

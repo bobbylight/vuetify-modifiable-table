@@ -110,15 +110,15 @@ export interface ModifiableTableHeader {
     sort?: (a: any, b: any) => number;
 }
 
-export interface ModifiableTableRowValidationFunction<T> {
-    (newRowData: T, origRowData: T | null, allRecords: T[]): boolean;
+export interface ModifiableTableRowValidationFunction {
+    (newRowData: any, origRowData: any | null, allRecords: any[]): boolean;
 }
 
 @Component
-export default class ModifiableTable<T> extends Vue {
+export default class ModifiableTable extends Vue {
 
     @Prop({ required: true })
-    value!: T[]; // Named "value" for v-model support
+    value!: any[]; // Named "value" for v-model support
 
     @Prop({ required: true })
     headers!: ModifiableTableHeader[];
@@ -130,7 +130,7 @@ export default class ModifiableTable<T> extends Vue {
     itemName!: string;
 
     @Prop()
-    validationFunc!: ModifiableTableRowValidationFunction<T> | null;
+    validationFunc!: ModifiableTableRowValidationFunction | null;
 
     @Prop({ required: false })
     title!: string;
@@ -141,15 +141,15 @@ export default class ModifiableTable<T> extends Vue {
     @Prop({ default: false })
     dense!: boolean;
 
-    allItems: T[] = [];
+    allItems: any[] = [];
 
-    selectedItems: T[] = [];
+    selectedItems: any[] = [];
 
     dialog: boolean = false;
     deleteDialog: boolean = false;
 
     showModifyRowDialog: boolean = false;
-    rowBeingModified: T | null = null;
+    rowBeingModified: any | null = null;
     modifiedItemKey: string | null = null;
     saveDisabled: boolean = true;
 
@@ -167,8 +167,8 @@ export default class ModifiableTable<T> extends Vue {
             return true;
         }
 
-        const origRow: T | null = this.modifiedItemKey ? this.selectedItems[0] : null;
-        return !!this.validationFunc && !this.validationFunc(this.rowBeingModified as T, origRow, this.allItems);
+        const origRow: any | null = this.modifiedItemKey ? this.selectedItems[0] : null;
+        return !!this.validationFunc && !this.validationFunc(this.rowBeingModified as any, origRow, this.allItems);
     }
 
     mounted() {
@@ -190,7 +190,7 @@ export default class ModifiableTable<T> extends Vue {
 
         const selectedKey: any = (this.rowBeingModified as any)[this.itemKey];
 
-        const newDataList: T[] = this.value.filter((v: T) => {
+        const newDataList: any[] = this.value.filter((v: any) => {
             return (v as any)[this.itemKey] !== selectedKey;
         });
 
@@ -206,8 +206,8 @@ export default class ModifiableTable<T> extends Vue {
 
     onSave() {
 
-        const newDataList: T[] = this.value.slice();
-        const index: number = newDataList.findIndex((item: T) => {
+        const newDataList: any[] = this.value.slice();
+        const index: number = newDataList.findIndex((item: any) => {
             return (item as any)[this.itemKey] === this.modifiedItemKey;
         });
         if (index > -1) {
@@ -231,7 +231,7 @@ export default class ModifiableTable<T> extends Vue {
     }
 
     @Watch('value')
-    onValueChanged(newItems: T[]) {
+    onValueChanged(newItems: any[]) {
         this.allItems = newItems.slice();
         this.selectedItems = [];
         this.rowBeingModified = null;
@@ -243,7 +243,7 @@ export default class ModifiableTable<T> extends Vue {
             this.rowBeingModified = JSON.parse(JSON.stringify(this.selectedItems[0]));
         }
         else {
-            this.rowBeingModified = {} as T;
+            this.rowBeingModified = {};
         }
 
         this.saveDisabled = this.isSaveButtonDisabled();

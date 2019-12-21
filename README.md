@@ -30,3 +30,5 @@ import ModifiableTable from 'vuetify-modifiable-table/modifiable-table.vue'
 
 This way you don't have to worry about minified builds, type definitions, etc.
 The component will just get minified in your consuming project.
+
+For non-TypeScript projects a built version of the component lives in `dist`.

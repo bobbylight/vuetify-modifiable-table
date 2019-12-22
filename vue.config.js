@@ -3,14 +3,28 @@ module.exports = {
         'vuetify'
     ],
 
-    // This is a big cluster of an attempt to limit the number of "foo.vue" copies show up
-    // in the Chrome debugger.  https://github.com/vuejs/vue-cli/issues/2978
     configureWebpack: (config) => {
 
         // Don't include dependencies in our production builds of the component, but preserve
         // them for our demo and npm run serve
         config.externals = process.env.NODE_ENV === 'production' ? [ 'vue', 'vuetify' ] : undefined;
 
+        // Needed as a workaround to emit .d.ts files when using vue-cli.  Yuck.
+        // See https://github.com/vuejs/vue-cli/issues/1081 and related workaround
+        // in chainWebpack below
+        if(process.env.NODE_ENV === 'production') {
+            config.module.rules.forEach(rule => {
+                if (rule.use) {
+                    let idx = rule.use.findIndex(w => w.loader === 'thread-loader');
+                    if (idx !== -1) {
+                        rule.use.splice(idx, 1);
+                    }
+                }
+            });
+        }
+
+        // This is a big cluster of an attempt to limit the number of "foo.vue" copies show up
+        // in the Chrome debugger.  https://github.com/vuejs/vue-cli/issues/2978
         if (process.env.NODE_ENV === 'development') {
             config.devtool = 'eval-source-map';
             config.output.devtoolFallbackModuleFilenameTemplate = 'webpack:///[resource-path]?[hash]';
@@ -36,6 +50,26 @@ module.exports = {
                 // If not generated, filter as webpack-vue
                 return `webpack-vue:///${info.resourcePath}`;
             }
+        }
+    },
+
+    chainWebpack: config => {
+        // Needed as a workaround to emit .d.ts files when using vue-cli.  Yuck.
+        // See https://github.com/vuejs/vue-cli/issues/1081 and related workaround
+        // in configureWebpack above
+        if (process.env.NODE_ENV === 'production') {
+            // disable cache (not sure if this is actually useful...)
+            config.module.rule("ts").uses.delete("cache-loader");
+
+            config.module
+                .rule('ts')
+                .use('ts-loader')
+                .loader('ts-loader')
+                .tap(opts => {
+                    opts.transpileOnly = false;
+                    opts.happyPackMode = false;
+                    return opts;
+                });
         }
     }
 };

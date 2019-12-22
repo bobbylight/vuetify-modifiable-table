@@ -21,14 +21,8 @@ npm run test   # Runs unit tests
 ```
 
 ## Using in an application
-Not sure if it's kosher, but for TypeScript projects I just add this library
-to my dependencies, then just:
+Use this like any other `Vuetify` component.
 
 ```javascript
-import ModifiableTable from 'vuetify-modifiable-table/modifiable-table.vue'
+import ModifiableTable from 'vuetify-modifiable-table';
 ```
-
-This way you don't have to worry about minified builds, type definitions, etc.
-The component will just get minified in your consuming project.
-
-For non-TypeScript projects a built version of the component lives in `dist`.

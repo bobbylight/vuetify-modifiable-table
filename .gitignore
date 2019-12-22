@@ -1,6 +1,8 @@
 .DS_Store
 node_modules
-/dist
+demo/
+dist/
+modifiable-table.vue.d.ts
 
 # local env files
 .env.local
@@ -14,8 +16,5 @@ yarn-error.log*
 # Editor directories and files
 .idea
 .vscode
-*.suo
-*.ntvs*
-*.njsproj
-*.sln
-*.sw?
+
+*.tgz

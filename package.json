@@ -1,15 +1,11 @@
 {
   "name": "vuetify-modifiable-table",
-  "version": "0.3.5",
+  "version": "0.3.6",
   "scripts": {
     "serve": "vue-cli-service serve src/demo/main.ts",
     "build": "NODE_ENV=production vue-cli-service build --target lib --skip-plugins vuetify src/modifiable-table.vue",
     "build-demo": "vue-cli-service build src/demo/main.ts",
     "lint": "vue-cli-service lint"
-  },
-  "dependencies": {
-    "vue": "2.6.10",
-    "vuetify": "2.1.9"
   },
   "devDependencies": {
     "@vue/cli-plugin-typescript": "4.0.5",
@@ -20,8 +16,12 @@
     "vue-class-component": "7.1.0",
     "vue-cli-plugin-vuetify": "1.1.2",
     "vue-property-decorator": "8.3.0",
-    "vue-template-compiler": "2.6.10",
+    "vue-template-compiler": "^2",
     "vuetify-loader": "1.3.0"
+  },
+  "peerDependencies": {
+    "vue": "2.x",
+    "vuetify": "2.x"
   },
   "types": "modifiable-table.vue.d.ts",
   "main": "dist/vuetify-modifiable-table.umd.js",
@@ -33,5 +33,9 @@
   "browserslist": [
     "> 1%",
     "last 2 versions"
-  ]
+  ],
+  "dependencies": {
+    "vue": "2.6.11",
+    "vuetify": "2.1.15"
+  }
 }

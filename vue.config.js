@@ -5,9 +5,9 @@ module.exports = {
 
     configureWebpack: (config) => {
 
-        // // Don't include dependencies in our production builds of the component, but preserve
-        // // them for our demo and npm run serve
-        // config.externals = process.env.NODE_ENV === 'production' ? [ 'vue', 'vuetify' ] : undefined;
+        // Don't include dependencies in our production builds of the component, but preserve
+        // them for our demo and npm run serve
+        config.externals = process.env.NODE_ENV === 'production' ? [ 'vue', 'vuetify' ] : undefined;
 
         // Needed as a workaround to emit .d.ts files when using vue-cli.  Yuck.
         // See https://github.com/vuejs/vue-cli/issues/1081 and related workaround

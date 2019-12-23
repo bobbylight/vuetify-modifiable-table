@@ -96,6 +96,14 @@
 import Component from 'vue-class-component';
 import Vue from 'vue';
 import { Prop, Watch } from 'vue-property-decorator';
+// Being a precompiled library, we must explicitly import our
+// peer dependency (Vuetify) dependencies.
+// https://github.com/vuetifyjs/vuetify-loader/issues/70
+import 'vuetify/lib/components/VDataTable';
+import 'vuetify/lib/components/VDialog';
+import 'vuetify/lib/components/VCard';
+import 'vuetify/lib/components/VGrid'; // For VContainer, VRow, VSpacer
+import 'vuetify/lib/components/VBtn';
 
 /**
  * Valid fields for a header in a modifiable table.

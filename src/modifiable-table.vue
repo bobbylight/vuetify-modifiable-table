@@ -93,17 +93,13 @@
 </template>
 
 <script lang="ts">
-import Component from 'vue-class-component';
 import Vue from 'vue';
-import { Prop, Watch } from 'vue-property-decorator';
+import { Component, Prop, Watch } from 'vue-property-decorator';
 // Being a precompiled library, we must explicitly import our
 // peer dependency (Vuetify) dependencies.
 // https://github.com/vuetifyjs/vuetify-loader/issues/70
-import 'vuetify/lib/components/VDataTable';
-import 'vuetify/lib/components/VDialog';
-import 'vuetify/lib/components/VCard';
-import 'vuetify/lib/components/VGrid'; // For VContainer, VRow, VSpacer
-import 'vuetify/lib/components/VBtn';
+import { VBtn, VCard, VCardActions, VCardText, VCardTitle, VContainer, VDataTable, VDialog, VIcon, VRow, VSpacer,
+    VToolbar } from 'vuetify/lib';
 
 /**
  * Valid fields for a header in a modifiable table.
@@ -133,7 +129,8 @@ export interface ModifiableTableRowValidationFunction<T> {
  * A table that allows the user to create, edit, delete, and optionally sort
  * records.
  */
-@Component
+@Component({ components: { VBtn, VCard, VCardActions, VCardText, VCardTitle, VContainer, VDataTable, VDialog,
+        VIcon, VRow, VSpacer, VToolbar } })
 export default class ModifiableTable<T> extends Vue {
 
     @Prop({ required: true })
